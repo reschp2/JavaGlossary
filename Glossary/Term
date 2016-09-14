@@ -1,0 +1,59 @@
+package Glossary;
+
+public class Term extends 
+{
+	private int termId;
+	private String termName;
+	private String termDefinition;
+	
+	public Term()
+	{         
+		this.termId = null;
+		this.termName = null;
+		this.termDefinition = null;
+	}
+	
+	public Term(String termName, String termDefinition)
+	{
+		this.termId = null;
+		this.termName = termName;
+		this.termDefinition = termDefinition;
+	}
+	
+	public Term(int termId, String termName, String termDefinition)
+	{
+		this.termId = termId;
+		this.termName = termName;
+		this.termDefinition = termDefinition;
+	}
+	
+	public void getTermId() 
+	{		
+		return this.termId;
+	}
+	
+	public void setTermId(int termId) 
+	{		
+		this.termId = termId;
+	}
+	
+	public void getTermName() 
+	{		
+		return this.termName;
+	}
+	
+	public void setTermName(int termName) 
+	{		
+		this.termName = termName;
+	}
+	
+	public void getTermDefinition() 
+	{		
+		return this.termDefinition;
+	}
+	
+	public void setTermId(int termDefinition) 
+	{		
+		this.termDefinition = termDefinition;
+	}
+}
