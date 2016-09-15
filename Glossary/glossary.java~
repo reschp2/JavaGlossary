@@ -1,8 +1,11 @@
 package Glossary;
 
+import java.util.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import java.sql.*;  
+import com.microsoft.sqlserver.jdbc.*;  
 
 public class Glossary extends JPanel
 {
@@ -17,9 +20,10 @@ public class Glossary extends JPanel
 	private JTextField txtDefinition;
 	private JTextField txtSearchTerm;
 	private JTextArea txtaTermsList;
+	private String connectionString;
 	
 	public Glossary()
-	{
+	{         
 		//create componenets
 		lblTitle = new JLabel("Glossary", JLabel.CENTER);
 		lblTerm = new JLabel("Term:", JLabel.CENTER);
@@ -31,13 +35,13 @@ public class Glossary extends JPanel
 		txtTerm = new JTextField(25);
 		txtDefinition = new JTextField(100);
 		txtSearchTerm = new JTextField(25);
-		txtaTermsList = new JTextArea(100,100);
+		txtaTermsList = new JTextArea(50,50);
 		
 		//create and display title
 		JPanel titleLine = new JPanel();
 		titleLine.add(lblTitle);
 		
-		//create and display from elements
+		//create and display form components
 		JPanel form = new JPanel();
 		form.setLayout(new GridBagLayout());
 		GridBagConstraints form_Contraints = new GridBagConstraints();
@@ -67,7 +71,9 @@ public class Glossary extends JPanel
 		form_Contraints.gridy++;
 		form.add(btnSearch,form_Contraints);
 		
-		//create and display terms list
+		//create and display terms list text area components
+		txtaTermsList.setEditable(false);
+		txtaTermsList.setLineWrap(true);
 		JPanel termsListGrid = new JPanel();
 		termsListGrid.setLayout(new GridBagLayout());
 		GridBagConstraints termsListGrid_constraints = new GridBagConstraints();
@@ -77,7 +83,20 @@ public class Glossary extends JPanel
 		termsListGrid_constraints.gridy++;
 		termsListGrid.add(txtaTermsList,termsListGrid_constraints);
 		
-		//add views to parent grid
+		//populate terms list with currently existing terms
+		ArrayList<Term> termsList = new ArrayList<Term>();
+		TermsManager tm = new TermsManager();
+		termsList = tm.getTermsList();
+		Term curr = new Term();
+		String listText = new String("");
+		for (int i = 0; i < termsList.size(); i++) 
+		{
+			curr = termsList.get(i);
+			listText = listText + curr.getTermName() + ":" +  "\n" + curr.getTermDefinition() + "\n\n";
+		}
+		txtaTermsList.setText(listText);
+	
+                //add views to parent grid
 		JPanel parentGrid = new JPanel();
 		parentGrid.setLayout(new GridBagLayout());
 		GridBagConstraints parentGrid_contraints = new GridBagConstraints();
@@ -89,13 +108,10 @@ public class Glossary extends JPanel
 		parentGrid_contraints.gridy++;
 		parentGrid.add(termsListGrid,parentGrid_contraints);
 		
-		//add parentgrid to main JPanel
-		add(parentGrid);	
-	}
-	
-	public void actionPerformed(ActionEvent e) 
-	{
-		
+		//make application scrollable by placing parentGrid in a scroll pane
+		JScrollPane parentPane = new JScrollPane(parentGrid);
+		parentPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		add(parentPane);
 	}
 	
 	public static void drawScreen() 
