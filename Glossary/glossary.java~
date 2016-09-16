@@ -9,6 +9,7 @@ import com.microsoft.sqlserver.jdbc.*;
 
 public class Glossary extends JPanel
 {
+	//define gui components
 	private JLabel lblTitle;
 	private JLabel lblTerm;
 	private JLabel lblDefinition;
@@ -20,7 +21,8 @@ public class Glossary extends JPanel
 	private JTextField txtDefinition;
 	private JTextField txtSearchTerm;
 	private JTextArea txtaTermsList;
-	private String connectionString;
+	//other variables
+	private TermsManager termsManager;
 	
 	public Glossary()
 	{         
@@ -35,13 +37,14 @@ public class Glossary extends JPanel
 		txtTerm = new JTextField(25);
 		txtDefinition = new JTextField(100);
 		txtSearchTerm = new JTextField(25);
-		txtaTermsList = new JTextArea(50,50);
+		txtaTermsList = new JTextArea(100,100);
+		this.termsManager = new TermsManager();
 		
-		//create and display title
+		//set title pane components
 		JPanel titleLine = new JPanel();
 		titleLine.add(lblTitle);
 		
-		//create and display form components
+		//set form components
 		JPanel form = new JPanel();
 		form.setLayout(new GridBagLayout());
 		GridBagConstraints form_Contraints = new GridBagConstraints();
@@ -71,7 +74,7 @@ public class Glossary extends JPanel
 		form_Contraints.gridy++;
 		form.add(btnSearch,form_Contraints);
 		
-		//create and display terms list text area components
+		//set terms list components
 		txtaTermsList.setEditable(false);
 		txtaTermsList.setLineWrap(true);
 		JPanel termsListGrid = new JPanel();
@@ -83,18 +86,34 @@ public class Glossary extends JPanel
 		termsListGrid_constraints.gridy++;
 		termsListGrid.add(txtaTermsList,termsListGrid_constraints);
 		
-		//populate terms list with currently existing terms
-		ArrayList<Term> termsList = new ArrayList<Term>();
-		TermsManager tm = new TermsManager();
-		termsList = tm.getTermsList();
-		Term curr = new Term();
-		String listText = new String("");
-		for (int i = 0; i < termsList.size(); i++) 
-		{
-			curr = termsList.get(i);
-			listText = listText + curr.getTermName() + ":" +  "\n" + curr.getTermDefinition() + "\n\n";
-		}
-		txtaTermsList.setText(listText);
+		//populate terms list text area with currently existing terms
+		updateList();
+		
+		//implement button functionality
+		//attempt to add a term and definition to termsManager, update txtaTermsList text
+		btnAdd.addActionListener(new ActionListener() 
+			{
+				public void actionPerformed(ActionEvent e) 
+				{
+					String term = txtTerm.getText().trim();
+					String definition = txtDefinition.getText().trim();
+					termsManager.addTerm(term, definition);
+					txtTerm.setText("");
+					txtDefinition.setText("");
+					updateList();
+				}          
+			});
+		
+		//search for a term based on a query entered into txtSearchTerm, prints list with term moved to beginning of the list if found
+		btnSearch.addActionListener(new ActionListener() 
+			{
+				public void actionPerformed(ActionEvent e) 
+				{
+					String query = txtSearchTerm.getText();
+					txtSearchTerm.setText("");
+					updateList(query);
+				}          
+			});
 	
                 //add views to parent grid
 		JPanel parentGrid = new JPanel();
@@ -114,6 +133,96 @@ public class Glossary extends JPanel
 		add(parentPane);
 	}
 	
+	//prints current list of search terms in txtaTermsList
+	public void updateList()
+	{
+		//clear terms list text area
+		this.txtaTermsList.setText("");
+		
+		//set vars
+		ArrayList<Term> termsList = this.termsManager.getTermsList();  //holds array list of Term objects
+		Term currentTerm = new Term();     //holds current Term object in arrayList
+		String listText = new String("");  //string containing all list terms to be added to terms list text area
+		
+		//build listText string using all elements in termsList
+		for (int i = 0; i < termsList.size(); i++) 
+		{
+			currentTerm = termsList.get(i);
+			listText = listText + currentTerm.getTermName() + ":" +  "\n" + currentTerm.getTermDefinition() + "\n\n";
+		}
+		//set terms list text area text value to listText
+		this.txtaTermsList.setText(listText);
+	}	
+	
+	//searches for a specific term name based on query; if found, prints term name and definition at top of the list in txtaTermsList, then prints the rest of the list in normal order
+	public void updateList(String query)
+	{
+		//clean input
+		query = query.trim();
+		
+		//set vars
+		ArrayList<Term> termsList = this.termsManager.getTermsList();  //holds array list of Term objects
+		Term currentTerm;  //holds current Term object from termsList 
+		
+		//search for query match with one of the term names in termsList
+		boolean found = false;     //flag to tell when/if term is found
+		int matchIndex = -1;		//save index of found term
+		//search for term, found when term name matches query
+		for (int i = 0; i < termsList.size(); i++) 
+		{
+			currentTerm = termsList.get(i);
+			if(currentTerm.getTermName().equals(query))
+			{
+				found = true;
+				matchIndex = i;
+				break;
+			}
+		}
+		//if query found, print it and its corresponding defintion first, then the rest of the search terms in normal order
+		if(found)
+		{
+			//clear terms list text area
+			this.txtaTermsList.setText("");
+			//set currentTerm to term found in search
+			currentTerm = termsList.get(matchIndex);
+			
+			//set vars
+			String listText = new String();  //string containing all list terms to be added to terms list text area
+			//initilize listText string with term and definition at index of found matching query
+			listText = currentTerm.getTermName() + ":" +  "\n" + currentTerm.getTermDefinition() + "\n\n";
+			
+			//build listText string using all elements in termsList minus the found term
+			for (int i = 0; i < termsList.size(); i++) 
+			{
+				if(matchIndex != i)
+				{
+					currentTerm = termsList.get(i);
+					listText = listText + currentTerm.getTermName() + ":" +  "\n" + currentTerm.getTermDefinition() + "\n\n";
+				}
+			}
+			//set terms list text area text value to listText
+			this.txtaTermsList.setText(listText);
+		}
+		//if query not found, list items normally
+		else
+		{
+			//clear terms list text area
+			this.txtaTermsList.setText("");
+			
+			//set vars
+			String listText = new String("");  //string containing all list terms to be added to terms list text area
+			
+			//build listText string using all elements in termsList
+			for (int i = 0; i < termsList.size(); i++) 
+			{
+				currentTerm = termsList.get(i);
+				listText = listText + currentTerm.getTermName() + ":" +  "\n" + currentTerm.getTermDefinition() + "\n\n";
+			}
+			//set terms list text area text value to listText
+			this.txtaTermsList.setText(listText);
+		}		
+	}
+		
 	public static void drawScreen() 
 	{		
 		//Create and set up the window.

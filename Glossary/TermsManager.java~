@@ -14,19 +14,32 @@ public class TermsManager
 		//connect to database and populate terms list with currently existing terms
 		String connectionString = "jdbc:sqlserver://localhost:45777;databaseName=glossary;user=sa;password=asdfbnm8";
 		termsList = new ArrayList<Term>();
-		Connection conn = null;
+		this.conn = null;
+		try 
+		{  
+                    this.conn = DriverManager.getConnection(connectionString); 
+                }  
+                catch (Exception e) 
+                {  
+                    e.printStackTrace();  
+                }  
+                termsList = getTermsList();
+	}
+	
+	//returns list of terms currently existing in database
+	public ArrayList<Term> getTermsList() 
+	{	
+		termsList = new ArrayList<Term>();
 		Statement stmt = null;   
                 ResultSet terms = null;
 		try 
-		{  
-                    conn = DriverManager.getConnection(connectionString); 
-                    
-                    // Create and execute a SELECT SQL statement.  
-                    String selectSql = "select termName,termDefinition from term;";  
-                    stmt = conn.createStatement();  
-                    terms = stmt.executeQuery(selectSql);  
+		{                      
+                    // get all existing terms from database  
+                    String sql = "SELECT termName,termDefinition FROM term ORDER BY termName;";  
+                    stmt = this.conn.createStatement();  
+                    terms = stmt.executeQuery(sql);  
       
-                    // add terms from database into termsList array
+                    // add terms from database into termsList array list
                     Term temp;
                     while (terms.next())   
                     {  
@@ -43,14 +56,38 @@ public class TermsManager
                     // Close the connections after the data has been handled.  
                     if (terms != null) try { terms.close(); } catch(Exception e) {}  
                     if (stmt != null) try { stmt.close(); } catch(Exception e) {}  
-                    if (conn != null) try { conn.close(); } catch(Exception e) {}
                 }
+		return termsList;
 	}
 	
-	public ArrayList<Term> getTermsList() 
-	{		
-		return (this.termsList);
+	public void addTerm(String termName, String termDefinition)
+	{
+		termName = termName.trim();
+		termDefinition = termDefinition.trim();
+		Term term = new Term(termName, termDefinition);
+		termsList.add(term);
+		Statement stmt = null;   
+                ResultSet terms = null;
+		try 
+		{                      
+                    // Create and execute a SELECT SQL statement.  
+                    String sql = "INSERT INTO term (termName, termDefinition) VALUES ('" + termName + "', '" + termDefinition + "');";  
+                    stmt = this.conn.createStatement();  
+                    stmt.executeUpdate(sql);  
+                }  
+                catch (Exception e) 
+                {  
+                    e.printStackTrace();  
+                }  
+                finally 
+                {  
+                    // Close the connections after the data has been handled.  
+                    if (terms != null) try { terms.close(); } catch(Exception e) {}  
+                    if (stmt != null) try { stmt.close(); } catch(Exception e) {}  
+                }
+		
 	}
+		
 	
 	protected void finalize() throws Throwable 
 	{
